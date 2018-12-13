@@ -15,6 +15,8 @@
 """
 import re
 from utils import blocks
+from handler import HtmlRender
+from rule import *
 
 
 class Parser(object):
@@ -26,8 +28,9 @@ class Parser(object):
             - condition
             - action
     """
-    def __init__(self, handler):
+    def __init__(self, handler, input_fp):
         self.handler = handler
+        self.input_fp = input_fp
         self.filters = []
         self.rules = []
 
@@ -39,27 +42,45 @@ class Parser(object):
     def add_rule(self, rule):
         self.rules.append(rule)
 
-    def parse(self, descriptor):
+    def parse(self):
         # 调用 过滤器，规则处理器完成文本解析，并输出
         self.handler.start("document")
-        for block in blocks(descriptor):
+        for block in blocks(self.input_fp):
             for fil in self.filters:
                 block = fil(block, self.handler)
-
             for r in self.rules:
-                pass
+                if r.condition(block):
+                    last = r.action(block, self.handler)
+                    if last:  # 表示应用的规则会最后，可直接退出
+                        break
         self.handler.end("document")
 
 
 class BaseTextParser(Parser):
 
-    emphasise_pattern = r'\*(.+?)\*', 'emphasis'
+    emphasise_pattern = r'\*(.+?)\*'
+    url_pattern = r'(https?://[\.a-zA-Z0-9/]+)'  # TODO
+    mail_pattern = r'([\.a-zA-Z0-9]+@[a-zA-Z]+\.[a-zA-Z]+)'  # TODO
 
-    def __init__(self, handler):
-        super(BaseTextParser, self).__init__(handler)
+    def __init__(self, handler, input_fp):
+        super(BaseTextParser, self).__init__(handler, input_fp)
+        self.add_rule(ListRule())
+        self.add_rule(ListItemRule())
+        self.add_rule(HeadingRule())
+        self.add_rule(ParagraphRule())
         self.add_filter(self.emphasise_pattern, "emphasise")
-        # self.add_rule()
+        self.add_filter(self.url_pattern, "url")
+        self.add_filter(self.mail_pattern, "mail")
 
 
 if __name__ == '__main__':
-    pass
+    from os import path
+    cur_dir = path.dirname(path.abspath(__file__))
+    test_file = path.join(cur_dir, "test_data")
+    output_file = path.join(cur_dir, "output.html")
+    with open(test_file) as fp:
+        with open(output_file, "w") as output_fp:
+            hd = HtmlRender(output_fp)
+            btp = BaseTextParser(hd, fp)
+            btp.parse()
+

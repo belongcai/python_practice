@@ -7,3 +7,41 @@
 python项目
 
 - 即刻标记 （可以演化成 markdown ) 
+
+```
+DOCKER
+
+随着容器的普及，所有云服务提供商（AWS、Azure、GCE、Oracle、OpenStack等）
+以下是云计算公司提供的一些*本地容器平台*示例：
+
+- AWS — KOPs
+
+- 谷歌云- GKE
+
+原文：https://xxx.xxx.xx
+```
+
+转义后，
+
+``` 
+<html><head><meta charset="UTF-8"><title>test</title></head><body>
+<h2>
+DOCKER
+</h2>
+<p>
+随着容器的普及，所有云服务提供商（AWS、Azure、GCE、Oracle、OpenStack等）以下是云计算公司提供的一些<em>本地容器平台</em>示例：
+</p>
+<ul>
+<li>
+AWS — KOPs
+</li>
+<li>
+谷歌云- GKE
+</li>
+</ul>
+<p>
+原文：<a href="https://xxx.xxx.xx">https://xxx.xxx.xx</a>
+</p>
+</body></html>
+```
+

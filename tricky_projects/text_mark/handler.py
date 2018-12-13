@@ -10,14 +10,25 @@ HtmlRender
     sub_xxx 替换成全标签形式，比如url替换成 <a href=url>url</a>
 @author: cbr
 """
+import sys
 
 
 class Handler(object):
 
+    def __init__(self, output_fp=None):
+        if output_fp is None:
+            output_fp = sys.stdout
+        self.output_fp = output_fp
+
+    def output(self, cont):
+        # 打开句柄异常由上层处理
+        self.output_fp.write(cont + "\n")
+
     def callback(self, prefix, name, *args):
         name = prefix + name
         method = getattr(self, name, None)
-        if callable(method): method(*args)
+        if callable(method):
+            return method(*args)  # !!! 返回结果
 
     def start(self, name):
         self.callback('start_', name)
@@ -28,24 +39,53 @@ class Handler(object):
     def sub(self, name):
         def substitution(match):
             # TODO 匹配失败处理
-            self.callback('sub_', name, match)
+            return self.callback('sub_', name, match)  # !!!: 这里返回结果
         return substitution
 
 
 class HtmlRender(Handler):
 
-    @classmethod
-    def start_paragraph(cls):
-        print("<p>")
+    def start_document(self):
+        self.output('<html><head><meta charset="UTF-8"><title>test</title></head><body>')
 
-    @classmethod
-    def end_paragraph(cls):
-        print("</p>")
+    def end_document(self):
+        self.output('</body></html>')
+
+    def start_heading(self):
+        self.output("<h2>")
+
+    def end_heading(self):
+        self.output("</h2>")
+
+    def start_paragraph(self):
+        self.output("<p>")
+
+    def end_paragraph(self):
+        self.output("</p>")
+
+    def start_list(self):
+        self.output("<ul>")
+
+    def end_list(self):
+        self.output("</ul>")
+
+    def start_list_item(self):
+        self.output("<li>")
+
+    def end_list_item(self):
+        self.output("</li>")
 
     @classmethod
     def sub_emphasise(cls, match):
-        print("<em>%s</em>" % match.group(1))
+        return "<em>%s</em>" % match.group(1)
 
     @classmethod
-    def feed(cls, data):
-        print(data)
+    def sub_url(cls, match):
+        return '<a href="%s">%s</a>' % (match.group(1), match.group(1))
+
+    @classmethod
+    def sub_mail(cls, match):
+        return '<a href="mailto:%s">%s</a>' % (match.group(1), match.group(1))
+
+    def feed(self, data):
+        self.output(data)
